@@ -32,18 +32,17 @@ dependencies** of this plugin — you do **not** add them by hand:
 ```yaml
 # pubspec.yaml
 dependencies:
-  zennopay_flutter: ^0.3.0
+  zennopay_flutter: ^0.4.0
 ```
 
-> **Note:** publication to pub.dev is pending. Until then, use a git
-> dependency:
+> **Note:** if pub.dev hasn't propagated the release yet, use a git dependency:
 >
 > ```yaml
 > dependencies:
 >   zennopay_flutter:
 >     git:
 >       url: https://github.com/Zennopay/zennopay-flutter-sdk
->       ref: v0.3.0
+>       ref: v0.4.0
 > ```
 
 ### Platform setup
@@ -108,6 +107,39 @@ status polling timed out before a terminal state — the payment may still settl
 so reconcile via your webhook or transaction history rather than assuming
 failure.
 
+### Reopening a receipt
+
+`Zennopay.presentReceipt(...)` presents the **authoritative** native receipt for
+a payment intent — the same receipt / pending / failure screens the sheet shows
+at the end of a payment — so users can reopen "view receipt" from your history.
+The native SDK fetches the receipt, polls a pending receipt through to a
+terminal state, shows refund copy when the intent was refunded, and re-mints the
+receipt token via `refreshReceiptToken` on a `401` mid-poll. The future
+completes (with no value) once the user dismisses it.
+
+```dart
+Future<void> viewReceipt(String intentId) async {
+  final receipt = await walletApi.mintReceiptToken(intentId);
+
+  await Zennopay.presentReceipt(
+    intentId: intentId,
+    receiptToken: receipt.receiptToken,
+    refreshReceiptToken: (intentId) async {
+      // Called on receipt-token expiry (401 mid-poll): re-mint for the SAME
+      // intent, or return null if you can't.
+      final refreshed = await walletApi.mintReceiptToken(intentId);
+      return refreshed.receiptToken;
+    },
+    config: ZennopayConfig.production,
+  );
+  // Completes when the user dismisses the receipt. It's read-only — there is no
+  // PaymentResult to handle.
+}
+```
+
+`presentReceipt` takes the same `ZennopayConfig` and `ZennopayAppearance` as
+`presentSheet`; theming is applied identically by the native SDK.
+
 ### Theming
 
 ```dart
@@ -145,9 +177,15 @@ The plugin talks to the native SDKs over a single `MethodChannel`
   (structured maps), resolving once with a terminal result map
   `{ status, intentId, receipt?, error? }` that Dart decodes into a
   `PaymentResult`.
+- **Dart → native `presentReceipt`** — args
+  `{ intentId, receiptToken, config, appearance }` (structured maps), resolving
+  with no value once the user dismisses the read-only native receipt.
 - **native → Dart `refreshSession`** — arg `{ intentId }`, replying with a fresh
   session JWT string (or `null`). This services the `refreshSession` host hook
   without blocking the native SDK's async refresh.
+- **native → Dart `refreshReceiptToken`** — arg `{ intentId }`, replying with a
+  fresh receipt token string (or `null`). Services the `refreshReceiptToken`
+  host hook when a pending receipt's token expires mid-poll.
 
 The native SDKs map their richer, dotted error taxonomy
 (e.g. `confirm.quote_expired`, `payment.declined`) onto the stable
@@ -157,8 +195,9 @@ The native SDKs map their richer, dotted error taxonomy
 
 Zennopay SDKs follow [semver](https://semver.org). `v0.x` releases are
 pre-GA: minor versions may contain breaking API changes, called out in the
-[CHANGELOG](CHANGELOG.md). **0.3.0 is a breaking change** from the 0.2.x
-pure-Dart UI — see the CHANGELOG for the migration notes.
+[CHANGELOG](CHANGELOG.md). **0.4.0** adds `presentReceipt` (no breaking
+changes); **0.3.0 was a breaking change** from the 0.2.x pure-Dart UI — see the
+CHANGELOG for the migration notes.
 
 All four Zennopay SDKs — [iOS](https://github.com/Zennopay/zennopay-ios-sdk),
 [Android](https://github.com/Zennopay/zennopay-android-sdk), Flutter, and

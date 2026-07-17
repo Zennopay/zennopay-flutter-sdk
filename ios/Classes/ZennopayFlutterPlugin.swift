@@ -34,6 +34,8 @@ public final class ZennopayFlutterPlugin: NSObject, FlutterPlugin {
     switch call.method {
     case "present":
       present(call: call, result: result)
+    case "presentReceipt":
+      presentReceipt(call: call, result: result)
     default:
       result(FlutterMethodNotImplemented)
     }
@@ -85,13 +87,71 @@ public final class ZennopayFlutterPlugin: NSObject, FlutterPlugin {
     }
   }
 
+  // MARK: - presentReceipt
+
+  private func presentReceipt(call: FlutterMethodCall, result: @escaping FlutterResult) {
+    guard
+      let args = call.arguments as? [String: Any],
+      let intentId = args["intentId"] as? String,
+      let receiptToken = args["receiptToken"] as? String
+    else {
+      result(FlutterError(
+        code: "invalid_jwt",
+        message: "presentReceipt requires intentId + receiptToken.",
+        details: nil
+      ))
+      return
+    }
+
+    let configMap = args["config"] as? [String: Any] ?? [:]
+    let appearanceMap = args["appearance"] as? [String: Any] ?? [:]
+    let config = ZennopayCodec.config(from: configMap)
+    let appearance = ZennopayCodec.appearance(from: appearanceMap)
+
+    Task { @MainActor in
+      guard let presenter = ZennopayFlutterPlugin.topViewController() else {
+        result(FlutterError(
+          code: "network_error",
+          message: "No UIViewController available to present the Zennopay receipt.",
+          details: nil
+        ))
+        return
+      }
+
+      Zennopay.presentReceipt(
+        from: presenter,
+        intentID: intentId,
+        receiptToken: receiptToken,
+        refreshReceiptToken: { [weak self] intent in
+          await self?.requestRefreshedReceiptToken(for: intent)
+        },
+        config: config,
+        appearance: appearance
+      ) {
+        // The receipt is a read-only surface: it resolves the Dart call with
+        // no value once the user dismisses it.
+        result(nil)
+      }
+    }
+  }
+
   // MARK: - refreshSession round-trip (native → Dart)
 
   private func requestRefreshedSession(for intentId: String) async -> String? {
+    await requestRefreshedToken(method: "refreshSession", intentId: intentId)
+  }
+
+  /// Fired by the native SDK on a 401 mid-poll on the receipt: ask Dart for a
+  /// fresh receipt token.
+  private func requestRefreshedReceiptToken(for intentId: String) async -> String? {
+    await requestRefreshedToken(method: "refreshReceiptToken", intentId: intentId)
+  }
+
+  private func requestRefreshedToken(method: String, intentId: String) async -> String? {
     await withCheckedContinuation { continuation in
       DispatchQueue.main.async {
         self.channel.invokeMethod(
-          "refreshSession",
+          method,
           arguments: ["intentId": intentId]
         ) { reply in
           continuation.resume(returning: reply as? String)

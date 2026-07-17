@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.4.0
+
+**New: `Zennopay.presentReceipt(...)` — reopen the authoritative receipt.** A
+second entrypoint that presents the **native** iOS/Android Zennopay receipt for
+a payment intent and completes (`Future<void>`) when the user dismisses it. The
+native SDK fetches the receipt, renders the native receipt / pending / failure
+screens, polls a pending receipt through to a terminal state, shows refund copy
+when the intent was refunded, and — on a `401` mid-poll — asks the host to
+re-mint the receipt token. Nothing is re-implemented in Dart; this mirrors
+`presentSheet` as a thin bridge.
+
+```dart
+await Zennopay.presentReceipt(
+  intentId: intentId,
+  receiptToken: receiptToken,
+  refreshReceiptToken: (intentId) => walletApi.refreshReceiptToken(intentId),
+  config: ZennopayConfig.production,
+);
+```
+
+- Dart API:
+  `presentReceipt({required String intentId, required String receiptToken,
+  ZennopayConfig? config, ZennopayAppearance? appearance,
+  Future<String?> Function(String intentId)? refreshReceiptToken})`.
+- New channel method `presentReceipt` + a native→Dart `refreshReceiptToken`
+  callback round-trip (reusing the mechanism `refreshSession` uses).
+- Native SDK dependency bump: iOS `Zennopay ~> 0.3.0`, Android
+  `in.zennopay:sdk:0.3.0` — the releases that expose `presentReceipt`.
+
+No changes to `presentSheet` or any existing public type.
+
 ## 0.3.0
 
 **BREAKING — `zennopay_flutter` is now a native bridge.** The package no longer

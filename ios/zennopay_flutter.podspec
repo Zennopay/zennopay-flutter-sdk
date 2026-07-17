@@ -18,10 +18,11 @@ Pod::Spec.new do |s|
   # The Flutter plugin host.
   s.dependency "Flutter"
 
-  # The native Zennopay iOS SDK that renders the PaymentSheet and exposes
-  # `Zennopay.presentCheckout(...)`. Pulled transitively so partners never add
-  # it by hand. Published separately as the `Zennopay` CocoaPod.
-  s.dependency "Zennopay"
+  # The native Zennopay iOS SDK that renders the PaymentSheet + receipt and
+  # exposes `Zennopay.presentCheckout(...)` / `Zennopay.presentReceipt(...)`.
+  # Pulled transitively so partners never add it by hand. Published separately
+  # as the `Zennopay` CocoaPod.
+  s.dependency "Zennopay", "~> 0.3.0"
 
   s.pod_target_xcconfig = { "DEFINES_MODULE" => "YES" }
 end

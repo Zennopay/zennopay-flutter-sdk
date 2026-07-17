@@ -41,6 +41,9 @@ class ZennopayFlutterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
     /** The Flutter result for the in-flight `present` call. Single-shot. */
     private var pendingResult: Result? = null
 
+    /** The Flutter result for the in-flight `presentReceipt` call. Single-shot. */
+    private var pendingReceiptResult: Result? = null
+
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(binding.binaryMessenger, "zennopay_flutter")
         channel.setMethodCallHandler(this)
@@ -73,6 +76,7 @@ class ZennopayFlutterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
     override fun onMethodCall(call: MethodCall, result: Result) {
         when (call.method) {
             "present" -> present(call, result)
+            "presentReceipt" -> presentReceipt(call, result)
             else -> result.notImplemented()
         }
     }
@@ -115,12 +119,60 @@ class ZennopayFlutterPlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
         }
     }
 
+    private fun presentReceipt(call: MethodCall, result: Result) {
+        val intentId = call.argument<String>("intentId")
+        val receiptToken = call.argument<String>("receiptToken")
+        if (intentId == null || receiptToken == null) {
+            result.error("invalid_jwt", "presentReceipt requires intentId + receiptToken.", null)
+            return
+        }
+
+        val host = activity
+        if (host == null) {
+            result.error(
+                "network_error",
+                "No ComponentActivity available to present the Zennopay receipt.",
+                null,
+            )
+            return
+        }
+
+        val config = ZennopayCodec.config(call.argument<Map<String, Any?>>("config"))
+        val appearance = ZennopayCodec.appearance(call.argument<Map<String, Any?>>("appearance"))
+
+        pendingReceiptResult = result
+
+        Zennopay.presentReceipt(
+            activity = host,
+            intentId = intentId,
+            receiptToken = receiptToken,
+            refreshReceiptToken = { intent -> requestRefreshedReceiptToken(intent) },
+            config = config,
+            appearance = appearance,
+        ) {
+            // The receipt is a read-only surface: resolve the Dart call with no
+            // value once the user dismisses it.
+            mainHandler.post {
+                pendingReceiptResult?.success(null)
+                pendingReceiptResult = null
+            }
+        }
+    }
+
     /** Fired by the native SDK on 401/expiry: ask Dart for a fresh JWT. */
     private suspend fun requestRefreshedSession(intentId: String): String? =
+        requestRefreshedToken("refreshSession", intentId)
+
+    /** Fired by the native SDK on a 401 mid-poll on the receipt: ask Dart for a
+     * fresh receipt token. */
+    private suspend fun requestRefreshedReceiptToken(intentId: String): String? =
+        requestRefreshedToken("refreshReceiptToken", intentId)
+
+    private suspend fun requestRefreshedToken(method: String, intentId: String): String? =
         suspendCancellableCoroutine { continuation ->
             mainHandler.post {
                 channel.invokeMethod(
-                    "refreshSession",
+                    method,
                     mapOf("intentId" to intentId),
                     object : Result {
                         override fun success(result: Any?) =
