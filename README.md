@@ -162,7 +162,7 @@ pure-Dart UI — see the CHANGELOG for the migration notes.
 
 All four Zennopay SDKs — [iOS](https://github.com/Zennopay/zennopay-ios-sdk),
 [Android](https://github.com/Zennopay/zennopay-android-sdk), Flutter, and
-[React Native](https://github.com/Zennopay/zennopay-react-native) — release
+[React Native](https://github.com/Zennopay/zennopay-react-native-sdk) — release
 in lockstep: the same `vX.Y.Z` tag and GitHub Release is cut in each repo
 per release. These standalone repos are release mirrors (squashed release
 commits, not full development history).
