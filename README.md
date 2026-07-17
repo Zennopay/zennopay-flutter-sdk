@@ -42,7 +42,7 @@ dependencies:
 > dependencies:
 >   zennopay_flutter:
 >     git:
->       url: https://github.com/Zennopay/zennopay-flutter
+>       url: https://github.com/Zennopay/zennopay-flutter-sdk
 >       ref: v0.3.0
 > ```
 

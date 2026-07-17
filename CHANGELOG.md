@@ -54,7 +54,7 @@ First public release, version-locked with the native Zennopay SDKs
 (iOS / Android v0.2.0 — the PaymentSheet release).
 
 - Package metadata now points at the public
-  [zennopay-flutter](https://github.com/Zennopay/zennopay-flutter) repository.
+  [zennopay-flutter](https://github.com/Zennopay/zennopay-flutter-sdk) repository.
 - Generic host-app wording in user-facing error copy.
 - No API changes from 0.1.0.
 
