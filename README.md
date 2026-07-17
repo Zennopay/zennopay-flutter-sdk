@@ -1,6 +1,6 @@
 # zennopay_flutter
 
-The Flutter SDK for [Zennopay](https://zennopay.com) — let your app's users
+The Flutter SDK for [Zennopay](https://zennopay.in) — let your app's users
 scan local merchant QR codes abroad and pay from their wallet balance.
 
 One `await Zennopay.presentSheet(...)` presents the **PaymentSheet** — the

@@ -1,0 +1,24 @@
+name: Publish to pub.dev
+
+# Publishes zennopay_flutter to pub.dev on a version tag, via pub.dev's
+# GitHub Actions OIDC trust (no long-lived token). REQUIRES a one-time setup
+# on pub.dev: Verified Publisher zennopay.in must enable "Automated publishing"
+# for this repo with tag pattern v{{version}}.
+#
+# Gated behind the PUBLISH_PUBDEV repo variable so a tag never publishes until
+# the publisher trust + the package's UI direction (pure-Dart vs native bridge)
+# are settled.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  publish:
+    if: vars.PUBLISH_PUBDEV == 'true'
+    permissions:
+      id-token: write # pub.dev OIDC
+      contents: read
+    uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
+    with:
+      environment: pub.dev

@@ -4,7 +4,7 @@ description: >-
   flow (scan → amount → confirm → status) that partners embed natively. Modeled
   on Stripe's PaymentSheet: one call in, one PaymentResult out.
 version: 0.2.0
-homepage: https://zennopay.com
+homepage: https://zennopay.in
 repository: https://github.com/Zennopay/zennopay-flutter
 documentation: https://github.com/Zennopay/zennopay-docs
 issue_tracker: https://github.com/Zennopay/zennopay-flutter/issues
