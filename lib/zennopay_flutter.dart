@@ -1,19 +1,17 @@
-/// Zennopay PaymentSheet for Flutter — the embeddable, in-app cross-border QR
-/// pay flow (scan → amount → confirm → status). One call in, one
-/// [PaymentResult] out. See `Zennopay.presentSheet`.
+/// Zennopay PaymentSheet for Flutter — a thin native bridge over the native
+/// Zennopay iOS/Android checkout sheets (scan → amount → confirm → status).
+/// One call in, one [PaymentResult] out. See `Zennopay.presentSheet`.
 library zennopay_flutter;
 
 export 'src/zennopay.dart' show Zennopay;
 
-// Public API surface
+// Public API surface — plain data classes serialized across the platform
+// channel; the native SDKs own all UI, networking, and EMVCo decoding.
 export 'src/models/payment_result.dart'
     show PaymentResult, Completed, Canceled, Failed, Pending, Receipt;
-export 'src/models/zennopay_error.dart'
-    show ZennopayError, ZennopayErrorCode;
+export 'src/models/zennopay_error.dart' show ZennopayError, ZennopayErrorCode;
 export 'src/models/zennopay_config.dart'
     show ZennopayConfig, ZennopayEnvironment;
-export 'src/models/scan_models.dart'
-    show Merchant, Quote, ScanResult, PaymentIntentRecord, QrKind;
 export 'src/appearance/zennopay_appearance.dart'
     show
         ZennopayAppearance,
@@ -21,6 +19,3 @@ export 'src/appearance/zennopay_appearance.dart'
         ZennopayShapes,
         ZennopayTypography,
         ZennopayPrimaryButton;
-
-// Reusable, display-only EMVCo decode.
-export 'src/models/emvco_parser.dart' show EmvCoParser, Tlv;

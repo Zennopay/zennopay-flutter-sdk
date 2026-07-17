@@ -1,5 +1,53 @@
 # Changelog
 
+## 0.3.0
+
+**BREAKING — `zennopay_flutter` is now a native bridge.** The package no longer
+ships its own pure-Dart PaymentSheet. `Zennopay.presentSheet(...)` now presents
+the **native** iOS/Android Zennopay PaymentSheet — the exact same accessible
+scan → amount → confirm → status flow as every other Zennopay SDK — over a
+platform channel. Flutter partners get full native parity and accessibility for
+free; there is no longer a separate Dart UI to keep in lockstep.
+
+Converted to a proper Flutter **plugin** (`in.zennopay.flutter` /
+`ZennopayFlutterPlugin`) that declares the native SDKs as transitive
+dependencies — partners do not add them by hand:
+
+- iOS: the `Zennopay` CocoaPod (via `s.dependency "Zennopay"`), iOS 16+.
+- Android: `in.zennopay:sdk:0.2.1` from Maven Central.
+
+### Breaking changes
+
+- `presentSheet` signature: **removed** `context`, `navigatorKey`, and
+  `onEvent`. New shape:
+  `presentSheet({required String intentId, required String sessionJwt,
+  ZennopayConfig? config, ZennopayAppearance? appearance,
+  Future<String?> Function(String intentId)? refreshSession})`. The native SDK
+  presents over the top view controller / current Activity, so no Flutter
+  `BuildContext` is needed.
+- **Removed** the display-only public models (`Merchant`, `Quote`, `ScanResult`,
+  `PaymentIntentRecord`, `QrKind`) and the reusable EMVCo parser (`EmvCoParser`,
+  `Tlv`) — the native SDK owns all scanning, networking, and EMVCo decoding.
+- `Receipt` fields are now all nullable. The native SDKs are the source of truth
+  for receipt data; iOS currently returns a bare completed result with no line
+  items (so `receipt` is `null` on iOS), while Android populates the merchant +
+  amount fields. `localAmountMinorUnits` / `amountUsdCents` are derived from the
+  native display amounts.
+- The Dart-only deps (`http`, `mobile_scanner`) are gone; the sheet's camera,
+  REST, polling, retries, and slide-to-pay physics all live in the native SDK.
+
+### Kept (stable public API)
+
+- `Zennopay.presentSheet(...) → Future<PaymentResult>`.
+- The `PaymentResult` sealed hierarchy (`Completed` / `Canceled` / `Failed` /
+  `Pending`) + `Receipt`.
+- `ZennopayError` + `ZennopayErrorCode` (the native dotted taxonomy is mapped to
+  these stable wire codes natively before crossing the channel).
+- `ZennopayConfig` (`staging` / `production` / `custom`) and the full
+  `ZennopayAppearance` theming surface (colors, radii ≤ 12px, font,
+  primaryButton, mode, logo) — serialized across the channel and applied by the
+  native SDK.
+
 ## 0.2.0
 
 First public release, version-locked with the native Zennopay SDKs

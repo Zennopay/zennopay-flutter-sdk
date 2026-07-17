@@ -1,0 +1,5 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- The native Zennopay SDK requests CAMERA at runtime and degrades to a
+         paste-QR fallback on denial. Merged into the host app's manifest. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+</manifest>

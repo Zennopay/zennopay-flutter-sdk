@@ -1,23 +1,20 @@
-import 'dart:convert';
-
-import 'package:flutter/widgets.dart';
+import 'package:flutter/services.dart';
 
 import 'appearance/zennopay_appearance.dart';
 import 'models/payment_result.dart';
 import 'models/zennopay_config.dart';
 import 'models/zennopay_error.dart';
-import 'network/rest_client.dart';
-import 'ui/checkout_controller.dart';
-import 'ui/payment_sheet.dart';
 
-/// The public entrypoint for the Zennopay PaymentSheet on Flutter (spec §4.3).
+/// The public entrypoint for the Zennopay PaymentSheet on Flutter.
 ///
-/// Mirrors Stripe Flutter's `Stripe.instance.presentPaymentSheet()` shape: one
-/// `Future<PaymentResult>`, and the terminal case is the resolved value.
+/// This package is a **native bridge**: one `await Zennopay.presentSheet(...)`
+/// presents the native iOS/Android Zennopay PaymentSheet — the full pay
+/// experience (QR scan → amount + FX quote → slide-to-pay → result) rendered by
+/// the native SDK, with full platform accessibility — and resolves with a
+/// single [PaymentResult]. Nothing here re-implements the UI in Dart.
 ///
 /// ```dart
 /// final result = await Zennopay.presentSheet(
-///   context: context,
 ///   intentId: 'zp_abc123',
 ///   sessionJwt: sessionJwt,
 ///   refreshSession: (intentId) => yourBackend.remintJwt(intentId),
@@ -34,136 +31,104 @@ import 'ui/payment_sheet.dart';
 abstract final class Zennopay {
   const Zennopay._();
 
-  /// A navigator key the host may install so [presentSheet] can be called
-  /// without a [BuildContext] (e.g. from a service layer). Optional — passing
-  /// `context` takes precedence.
-  static final GlobalKey<NavigatorState> navigatorKey =
-      GlobalKey<NavigatorState>();
+  /// The platform channel shared with `ZennopayFlutterPlugin` on both
+  /// platforms. `present` is Dart→native (resolves with the terminal result
+  /// map); `refreshSession` is native→Dart (services the host hook without
+  /// blocking the native SDK).
+  static const MethodChannel _channel = MethodChannel('zennopay_flutter');
 
-  /// Present the native pay experience and resolve once with a [PaymentResult].
+  static bool _handlerInstalled = false;
+
+  /// The `refreshSession` hook for the in-flight [presentSheet] call. Only one
+  /// checkout can be live at a time (the native sheet covers the host), so a
+  /// single slot is sufficient.
+  static Future<String?> Function(String intentId)? _activeRefresh;
+
+  /// Present the native Zennopay PaymentSheet and resolve once with a
+  /// [PaymentResult].
   ///
   /// Camera permission, scanning, quoting, confirm, polling, retries, session
-  /// refresh, and relaunch recovery are all internal.
+  /// refresh, and relaunch recovery are all owned by the native SDK.
   ///
-  /// A [context] (or an installed [navigatorKey]) is required to present the
-  /// modal. Providing neither resolves immediately with
-  /// `Failed(intentId, invalidJwt)` — a fail-fast integration error.
+  /// - [intentId]: the Zennopay payment intent your backend pre-created.
+  /// - [sessionJwt]: the partner-minted, intent-bound session JWT (≤5 min).
+  /// - [refreshSession]: optional host hook invoked on a 401/expiry. Re-mint a
+  ///   fresh session JWT for the SAME intent, or return null if you can't.
+  /// - [appearance]: partner theming; defaults to the bank-solid Zennopay look.
+  /// - [config]: REST/environment configuration; defaults to staging.
   static Future<PaymentResult> presentSheet({
     required String intentId,
     required String sessionJwt,
-    BuildContext? context,
+    ZennopayConfig? config,
+    ZennopayAppearance? appearance,
     Future<String?> Function(String intentId)? refreshSession,
-    ZennopayAppearance appearance = const ZennopayAppearance.automatic(),
-    ZennopayConfig config = ZennopayConfig.staging,
-    void Function(String event, Map<String, Object?> props)? onEvent,
   }) async {
-    // Fail-fast gate (spec §4.6): validate token shape + intent binding BEFORE
-    // presenting any UI.
-    final gateError = _preflight(intentId: intentId, sessionJwt: sessionJwt);
-    if (gateError != null) {
-      return Failed(intentId, gateError);
-    }
-
-    final navigator = context != null
-        ? Navigator.of(context, rootNavigator: true)
-        : navigatorKey.currentState;
-    if (navigator == null) {
+    // Cheap fail-fast for the obvious integration mistake, without a channel
+    // hop. The native SDK performs the authoritative JWT structure / expiry /
+    // intent-binding gate.
+    if (intentId.trim().isEmpty || sessionJwt.trim().isEmpty) {
       return Failed(
         intentId,
-        const ZennopayError(
-          code: ZennopayErrorCode.invalidJwt,
-          developerMessage:
-              'No BuildContext or installed Zennopay.navigatorKey to present '
-              'the sheet.',
-        ),
+        const ZennopayError(code: ZennopayErrorCode.invalidJwt),
       );
     }
 
-    final client = ZennopayRestClient(
-      config: config,
-      intentId: intentId,
-      sessionJwt: sessionJwt,
-    );
-    final controller = CheckoutController(
-      intentId: intentId,
-      config: config,
-      client: client,
-      refreshSession: refreshSession,
-      onEvent: onEvent,
-    );
-    onEvent?.call('sheet_presented', {
-      'intent_id': intentId,
-      'environment': config.environment.name,
-    });
+    _installHandler();
+    _activeRefresh = refreshSession;
 
-    await navigator.push<void>(
-      PageRouteBuilder<void>(
-        opaque: false,
-        barrierColor: const Color(0x66000000),
-        pageBuilder: (_, __, ___) => ZennopayPaymentSheet(
-          controller: controller,
-          appearance: appearance,
-          config: config,
-        ),
-        transitionsBuilder: (_, animation, __, child) => SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(0, 1),
-            end: Offset.zero,
-          ).animate(CurvedAnimation(
-              parent: animation, curve: Curves.easeOutCubic)),
-          child: child,
-        ),
-      ),
-    );
+    final resolvedConfig = config ?? ZennopayConfig.staging;
+    final resolvedAppearance =
+        appearance ?? const ZennopayAppearance.automatic();
 
-    final result = await controller.result;
-    controller.dispose();
-    return result;
-  }
-
-  /// On-device JWT structure / `exp` / `intent_id`-binding check (no signature
-  /// verification — the backend is authority). Returns an error to fail fast,
-  /// or null if the token passes the local gate.
-  static ZennopayError? _preflight({
-    required String intentId,
-    required String sessionJwt,
-  }) {
-    final jwt = sessionJwt.trim();
-    if (jwt.isEmpty) {
-      return const ZennopayError(code: ZennopayErrorCode.invalidJwt);
-    }
-    final parts = jwt.split('.');
-    if (parts.length != 3) {
-      return const ZennopayError(code: ZennopayErrorCode.invalidJwt);
-    }
-    final claims = _decodeClaims(parts[1]);
-    if (claims == null) {
-      return const ZennopayError(code: ZennopayErrorCode.invalidJwt);
-    }
-    final boundIntent = claims['zennopay:intent_id'] ?? claims['intent_id'];
-    if (boundIntent is String && boundIntent != intentId) {
-      return const ZennopayError(code: ZennopayErrorCode.intentMismatch);
-    }
-    final exp = claims['exp'];
-    if (exp is num) {
-      final expiry = DateTime.fromMillisecondsSinceEpoch(exp.toInt() * 1000);
-      if (DateTime.now()
-          .isAfter(expiry.subtract(const Duration(seconds: 5)))) {
-        // Expired/near-expiry before presenting → benign, but with no way to
-        // refresh yet we surface it as a gate failure the host can re-mint on.
-        return const ZennopayError(code: ZennopayErrorCode.jwtExpired);
-      }
-    }
-    return null;
-  }
-
-  static Map<String, dynamic>? _decodeClaims(String segment) {
     try {
-      final decoded = utf8.decode(base64Url.decode(base64Url.normalize(segment)));
-      final v = jsonDecode(decoded);
-      return v is Map ? v.cast<String, dynamic>() : null;
-    } catch (_) {
-      return null;
+      final result = await _channel.invokeMapMethod<Object?, Object?>(
+        'present',
+        <String, Object?>{
+          'intentId': intentId,
+          'sessionJwt': sessionJwt,
+          'config': resolvedConfig.toMap(),
+          'appearance': resolvedAppearance.toMap(),
+        },
+      );
+      if (result == null) {
+        return Failed(
+          intentId,
+          const ZennopayError(code: ZennopayErrorCode.networkError),
+        );
+      }
+      return PaymentResult.fromMap(intentId, result);
+    } on PlatformException catch (e) {
+      // An integration-level failure raised by the native bridge (e.g. no
+      // Activity/UIViewController to present over) surfaces as a Failed rather
+      // than throwing, so the caller always gets exactly one PaymentResult.
+      return Failed(
+        intentId,
+        ZennopayError(
+          code: ZennopayErrorCode.fromWire(e.code),
+          developerMessage: e.message,
+        ),
+      );
+    } finally {
+      _activeRefresh = null;
     }
+  }
+
+  static void _installHandler() {
+    if (_handlerInstalled) return;
+    _handlerInstalled = true;
+    _channel.setMethodCallHandler((call) async {
+      if (call.method == 'refreshSession') {
+        final args = (call.arguments as Map?)?.cast<Object?, Object?>();
+        final intentId = args?['intentId'] as String? ?? '';
+        final refresh = _activeRefresh;
+        if (refresh == null) return null;
+        try {
+          return await refresh(intentId);
+        } catch (_) {
+          return null;
+        }
+      }
+      return null;
+    });
   }
 }

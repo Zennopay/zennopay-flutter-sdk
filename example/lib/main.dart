@@ -29,19 +29,21 @@ class _CheckoutDemoState extends State<CheckoutDemo> {
   Future<void> _pay() async {
     setState(() => _status = 'Presenting…');
 
-    // In a real app, your backend pre-creates the intent and mints this JWT.
-    // These placeholders let you wire the flow against a staging backend.
+    // In a real app, YOUR backend pre-creates the payment intent and mints the
+    // short-lived, intent-bound session JWT. These placeholders let you wire the
+    // flow against a staging backend — see the partner session-endpoint docs:
+    // https://github.com/Zennopay/zennopay-docs
     const intentId = 'zp_demo_intent';
     const sessionJwt = 'header.payload.signature';
 
     final result = await Zennopay.presentSheet(
-      context: context,
       intentId: intentId,
       sessionJwt: sessionJwt,
-      refreshSession: (id) async => sessionJwt, // re-mint from your backend
+      // Called on session expiry (401): re-mint for the SAME intent, or return
+      // null if you can't.
+      refreshSession: (id) async => sessionJwt,
       appearance: const ZennopayAppearance.automatic(),
       config: ZennopayConfig.staging,
-      onEvent: (name, props) => debugPrint('zp:$name $props'),
     );
 
     if (!mounted) return;

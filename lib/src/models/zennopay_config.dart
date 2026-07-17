@@ -36,8 +36,19 @@ class ZennopayConfig {
       );
 
   /// Whether the sandbox ribbon should be shown (any non-production env).
-  bool get showSandboxRibbon =>
-      environment != ZennopayEnvironment.production;
+  bool get showSandboxRibbon => environment != ZennopayEnvironment.production;
+
+  /// Serialize for the native bridge. The native SDKs derive their REST base
+  /// and sandbox chrome from `environment` + `apiBaseUrl`; the poll/quote
+  /// timings are forwarded so all surfaces share one budget.
+  Map<String, Object?> toMap() => {
+        'environment': environment.name,
+        'apiBaseUrl': apiBaseUrl,
+        'statusPollTimeoutSeconds': statusPollTimeout.inSeconds,
+        'maxPollIntervalSeconds': maxPollInterval.inSeconds,
+        'defaultQuoteTtlSeconds': defaultQuoteTtl.inSeconds,
+        if (locale != null) 'locale': locale,
+      };
 }
 
 enum ZennopayEnvironment { staging, production, custom }

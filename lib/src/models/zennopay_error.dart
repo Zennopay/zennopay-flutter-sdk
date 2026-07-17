@@ -48,6 +48,21 @@ class ZennopayError implements Exception {
   /// Developer-facing detail; never shown to the user.
   final String? developerMessage;
 
+  /// Decode the `{ code, requestId, message }` error map returned by the native
+  /// bridge. The native layer maps its richer, dotted taxonomy (e.g.
+  /// `confirm.quote_expired`, `payment.declined`) onto the stable wire codes in
+  /// [ZennopayErrorCode] before it crosses the channel.
+  factory ZennopayError.fromMap(Map<Object?, Object?>? map) {
+    if (map == null) {
+      return const ZennopayError(code: ZennopayErrorCode.networkError);
+    }
+    return ZennopayError(
+      code: ZennopayErrorCode.fromWire(map['code'] as String?),
+      requestId: map['requestId'] as String?,
+      developerMessage: map['message'] as String?,
+    );
+  }
+
   /// Whether the same operation may be retried (advisory; see taxonomy).
   bool get isRetryable => switch (code) {
         ZennopayErrorCode.jwtExpired ||
@@ -72,10 +87,10 @@ class ZennopayError implements Exception {
         ZennopayErrorCode.intentMismatch =>
           'Something went wrong starting this payment. Please return to the app '
               'and try again.',
-        ZennopayErrorCode.jwtExpired => 'Your session expired. Please return to '
-            'the app and try again.',
-        ZennopayErrorCode.jtiReplay =>
-          'Checking your payment status…',
+        ZennopayErrorCode.jwtExpired =>
+          'Your session expired. Please return to '
+              'the app and try again.',
+        ZennopayErrorCode.jtiReplay => 'Checking your payment status…',
         ZennopayErrorCode.cameraDenied =>
           'Camera access is off. Allow camera in Settings, or paste the QR data '
               'instead.',

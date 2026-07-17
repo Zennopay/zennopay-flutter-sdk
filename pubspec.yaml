@@ -1,9 +1,11 @@
 name: zennopay_flutter
 description: >-
-  Zennopay PaymentSheet for Flutter — the embeddable, in-app cross-border QR pay
-  flow (scan → amount → confirm → status) that partners embed natively. Modeled
-  on Stripe's PaymentSheet: one call in, one PaymentResult out.
-version: 0.2.0
+  Zennopay PaymentSheet for Flutter — a thin native bridge over the native
+  Zennopay iOS/Android checkout sheets (scan → amount → confirm → status). One
+  call in, one PaymentResult out. The sheet renders natively, so Flutter
+  partners get the exact same accessible PaymentSheet as every other Zennopay
+  SDK.
+version: 0.3.0
 homepage: https://zennopay.in
 repository: https://github.com/Zennopay/zennopay-flutter
 documentation: https://github.com/Zennopay/zennopay-docs
@@ -16,8 +18,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  http: ^1.2.0
-  mobile_scanner: ^5.2.3
 
 dev_dependencies:
   flutter_test:
@@ -25,3 +25,10 @@ dev_dependencies:
   flutter_lints: ^4.0.0
 
 flutter:
+  plugin:
+    platforms:
+      android:
+        package: in.zennopay.flutter
+        pluginClass: ZennopayFlutterPlugin
+      ios:
+        pluginClass: ZennopayFlutterPlugin
