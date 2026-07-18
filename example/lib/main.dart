@@ -31,7 +31,7 @@ class _CheckoutDemoState extends State<CheckoutDemo> {
 
     // In a real app, YOUR backend pre-creates the payment intent and mints the
     // short-lived, intent-bound session JWT. These placeholders let you wire the
-    // flow against a staging backend — see the partner session-endpoint docs:
+    // flow against a sandbox backend — see the partner session-endpoint docs:
     // https://github.com/Zennopay/zennopay-docs
     const intentId = 'zp_demo_intent';
     const sessionJwt = 'header.payload.signature';
@@ -43,7 +43,7 @@ class _CheckoutDemoState extends State<CheckoutDemo> {
       // null if you can't.
       refreshSession: (id) async => sessionJwt,
       appearance: const ZennopayAppearance.automatic(),
-      config: ZennopayConfig.staging,
+      config: ZennopayConfig.sandbox,
     );
 
     if (!mounted) return;

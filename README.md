@@ -32,7 +32,7 @@ dependencies** of this plugin — you do **not** add them by hand:
 ```yaml
 # pubspec.yaml
 dependencies:
-  zennopay_flutter: ^0.5.0
+  zennopay_flutter: ^0.6.0
 ```
 
 > **Note:** if pub.dev hasn't propagated the release yet, use a git dependency:
@@ -42,7 +42,7 @@ dependencies:
 >   zennopay_flutter:
 >     git:
 >       url: https://github.com/Zennopay/zennopay-flutter-sdk
->       ref: v0.5.0
+>       ref: v0.6.0
 > ```
 
 ### Platform setup
@@ -82,7 +82,7 @@ Future<void> scanAndPay() async {
       final refreshed = await walletApi.refreshSession(intentId);
       return refreshed?.sessionJwt;
     },
-    config: ZennopayConfig.staging, // ZennopayConfig.production for live
+    config: ZennopayConfig.sandbox, // ZennopayConfig.production for live
   );
 
   // 3. One terminal case, exhaustively.
@@ -139,6 +139,20 @@ Future<void> viewReceipt(String intentId) async {
 
 `presentReceipt` takes the same `ZennopayConfig` and `ZennopayAppearance` as
 `presentSheet`; theming is applied identically by the native SDK.
+
+### Environments
+
+`ZennopayConfig` selects the environment — a value, never a code path:
+
+```dart
+ZennopayConfig.sandbox     // https://api.sandbox.zennopay.in — SANDBOX ribbon shown (default)
+ZennopayConfig.production  // https://api.zennopay.in — real money, no sandbox chrome
+ZennopayConfig.custom('http://10.0.2.2:3000') // custom gateway
+```
+
+> `ZennopayConfig.staging` is **deprecated** — it is a compatibility alias for
+> `ZennopayConfig.sandbox` (same host, `https://api.sandbox.zennopay.in`).
+> Existing code keeps working; migrate to `sandbox`.
 
 ### Theming
 

@@ -19,7 +19,7 @@ import 'models/zennopay_error.dart';
 ///   sessionJwt: sessionJwt,
 ///   refreshSession: (intentId) => yourBackend.remintJwt(intentId),
 ///   appearance: const ZennopayAppearance.automatic(),
-///   config: ZennopayConfig.staging,
+///   config: ZennopayConfig.sandbox,
 /// );
 /// switch (result) {
 ///   case Completed(): showReceipt(result);
@@ -60,7 +60,7 @@ abstract final class Zennopay {
   /// - [refreshSession]: optional host hook invoked on a 401/expiry. Re-mint a
   ///   fresh session JWT for the SAME intent, or return null if you can't.
   /// - [appearance]: partner theming; defaults to the bank-solid Zennopay look.
-  /// - [config]: REST/environment configuration; defaults to staging.
+  /// - [config]: REST/environment configuration; defaults to sandbox.
   static Future<PaymentResult> presentSheet({
     required String intentId,
     required String sessionJwt,
@@ -81,7 +81,7 @@ abstract final class Zennopay {
     _installHandler();
     _activeRefresh = refreshSession;
 
-    final resolvedConfig = config ?? ZennopayConfig.staging;
+    final resolvedConfig = config ?? ZennopayConfig.sandbox;
     final resolvedAppearance =
         appearance ?? const ZennopayAppearance.automatic();
 
@@ -131,7 +131,7 @@ abstract final class Zennopay {
   ///
   /// - [intentId]: the Zennopay payment intent to show the receipt for.
   /// - [receiptToken]: the partner-minted, intent-bound receipt token.
-  /// - [config]: REST/environment configuration; defaults to staging.
+  /// - [config]: REST/environment configuration; defaults to sandbox.
   /// - [appearance]: partner theming; defaults to the bank-solid Zennopay look.
   /// - [refreshReceiptToken]: optional host hook invoked on a 401/expiry mid
   ///   poll. Re-mint a fresh receipt token for the SAME intent, or return null
@@ -153,7 +153,7 @@ abstract final class Zennopay {
     _installHandler();
     _activeReceiptRefresh = refreshReceiptToken;
 
-    final resolvedConfig = config ?? ZennopayConfig.staging;
+    final resolvedConfig = config ?? ZennopayConfig.sandbox;
     final resolvedAppearance =
         appearance ?? const ZennopayAppearance.automatic();
 

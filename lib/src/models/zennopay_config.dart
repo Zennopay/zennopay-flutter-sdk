@@ -1,5 +1,5 @@
 /// REST/environment configuration. The environment is **never** hardcoded — it
-/// comes from here (spec §6). Defaults to staging.
+/// comes from here (spec §6). Defaults to sandbox.
 class ZennopayConfig {
   const ZennopayConfig({
     required this.apiBaseUrl,
@@ -19,16 +19,24 @@ class ZennopayConfig {
   /// Optional locale pin (e.g. `en`, `hi`, `th`, `vi`). Device locale by default.
   final String? locale;
 
-  /// `api.staging.zennopay.in` — the default.
-  static const ZennopayConfig staging = ZennopayConfig(
-    apiBaseUrl: 'https://api.staging.zennopay.in',
-    environment: ZennopayEnvironment.staging,
+  /// `api.sandbox.zennopay.in` — the default. The environment partners
+  /// integrate and test against.
+  static const ZennopayConfig sandbox = ZennopayConfig(
+    apiBaseUrl: 'https://api.sandbox.zennopay.in',
+    environment: ZennopayEnvironment.sandbox,
   );
 
+  /// `api.zennopay.in` — live, money-moving traffic.
   static const ZennopayConfig production = ZennopayConfig(
     apiBaseUrl: 'https://api.zennopay.in',
     environment: ZennopayEnvironment.production,
   );
+
+  /// Deprecated alias for [sandbox]. Retained so existing integrations keep
+  /// compiling; now resolves to the sandbox gateway
+  /// (`https://api.sandbox.zennopay.in`).
+  @Deprecated('Use ZennopayConfig.sandbox')
+  static const ZennopayConfig staging = sandbox;
 
   factory ZennopayConfig.custom(String apiBaseUrl) => ZennopayConfig(
         apiBaseUrl: apiBaseUrl,
@@ -51,4 +59,12 @@ class ZennopayConfig {
       };
 }
 
-enum ZennopayEnvironment { staging, production, custom }
+enum ZennopayEnvironment {
+  sandbox,
+  production,
+  custom,
+
+  /// Deprecated alias for [sandbox].
+  @Deprecated('Use ZennopayEnvironment.sandbox')
+  staging,
+}

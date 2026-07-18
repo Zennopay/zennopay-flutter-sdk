@@ -185,7 +185,7 @@ enum ZennopayCodec {
 
   static func config(from map: [String: Any]) -> ZennopayConfig {
     let base = (map["apiBaseUrl"] as? String)
-      .flatMap(URL.init(string:)) ?? ZennopayConfig.staging.apiBaseURL
+      .flatMap(URL.init(string:)) ?? ZennopayConfig.sandbox.apiBaseURL
     let pollTimeout = (map["statusPollTimeoutSeconds"] as? NSNumber)?.doubleValue ?? 90
     let maxInterval = (map["maxPollIntervalSeconds"] as? NSNumber)?.doubleValue ?? 4
     let quoteTtl = (map["defaultQuoteTtlSeconds"] as? NSNumber)?.doubleValue ?? 30

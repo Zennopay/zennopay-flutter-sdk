@@ -1,9 +1,38 @@
 # Changelog
 
+## 0.6.0
+
+Partner-facing environment names. The config presets now match the docs and API
+reference: **sandbox** and **production**.
+
+### Added
+
+- `ZennopayConfig.sandbox` — `https://api.sandbox.zennopay.in`, the environment
+  partners integrate and test against. Now the default for `presentSheet` /
+  `presentReceipt`.
+- `ZennopayEnvironment.sandbox`.
+
+### Changed
+
+- `presentSheet` / `presentReceipt` default `config:` is now
+  `ZennopayConfig.sandbox` (was `.staging`). Same behavior, partner-facing name.
+- Native dependency bumped to `Zennopay ~> 0.6.0` (iOS). The Android native
+  dependency stays at `in.zennopay:sdk:0.5.0` until `0.6.0` propagates to Maven
+  Central; the Dart config passes `apiBaseUrl` explicitly, so the sandbox host
+  is used regardless of the native default.
+
+### Deprecated
+
+- `ZennopayConfig.staging` and `ZennopayEnvironment.staging` are deprecated
+  (`@Deprecated('Use ...sandbox')`) and are now compatibility aliases for the
+  sandbox equivalents — `staging` points at `https://api.sandbox.zennopay.in`
+  (previously `https://api.staging.zennopay.in`). Existing code keeps compiling;
+  migrate to `sandbox`.
+
 ## 0.5.0
 
 Version-aligned across all Zennopay SDKs (iOS/Android/Flutter) at 0.5.0. API
-domain default changed `zennopay.com` → `zennopay.in` (canonical) in the
+domain default migrated to `zennopay.in` (canonical) in the
 `ZennopayConfig.staging` / `ZennopayConfig.production` base URLs. No API changes.
 Native dependencies stay at `Zennopay ~> 0.3.0` (iOS) / `in.zennopay:sdk:0.3.0`
 (Android) — those releases remain valid.
