@@ -32,7 +32,7 @@ dependencies** of this plugin — you do **not** add them by hand:
 ```yaml
 # pubspec.yaml
 dependencies:
-  zennopay_flutter: ^0.4.0
+  zennopay_flutter: ^0.5.0
 ```
 
 > **Note:** if pub.dev hasn't propagated the release yet, use a git dependency:
@@ -42,7 +42,7 @@ dependencies:
 >   zennopay_flutter:
 >     git:
 >       url: https://github.com/Zennopay/zennopay-flutter-sdk
->       ref: v0.4.0
+>       ref: v0.5.0
 > ```
 
 ### Platform setup

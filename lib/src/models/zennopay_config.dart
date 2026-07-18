@@ -19,14 +19,14 @@ class ZennopayConfig {
   /// Optional locale pin (e.g. `en`, `hi`, `th`, `vi`). Device locale by default.
   final String? locale;
 
-  /// `api.staging.zennopay.com` — the default.
+  /// `api.staging.zennopay.in` — the default.
   static const ZennopayConfig staging = ZennopayConfig(
-    apiBaseUrl: 'https://api.staging.zennopay.com',
+    apiBaseUrl: 'https://api.staging.zennopay.in',
     environment: ZennopayEnvironment.staging,
   );
 
   static const ZennopayConfig production = ZennopayConfig(
-    apiBaseUrl: 'https://api.zennopay.com',
+    apiBaseUrl: 'https://api.zennopay.in',
     environment: ZennopayEnvironment.production,
   );
 

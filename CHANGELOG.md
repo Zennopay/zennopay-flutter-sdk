@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0
+
+Version-aligned across all Zennopay SDKs (iOS/Android/Flutter) at 0.5.0. API
+domain default changed `zennopay.com` → `zennopay.in` (canonical) in the
+`ZennopayConfig.staging` / `ZennopayConfig.production` base URLs. No API changes.
+Native dependencies stay at `Zennopay ~> 0.3.0` (iOS) / `in.zennopay:sdk:0.3.0`
+(Android) — those releases remain valid.
+
 ## 0.4.0
 
 **New: `Zennopay.presentReceipt(...)` — reopen the authoritative receipt.** A

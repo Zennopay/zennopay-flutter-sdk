@@ -5,7 +5,7 @@ description: >-
   call in, one PaymentResult out. The sheet renders natively, so Flutter
   partners get the exact same accessible PaymentSheet as every other Zennopay
   SDK.
-version: 0.4.0
+version: 0.5.0
 homepage: https://zennopay.in
 repository: https://github.com/Zennopay/zennopay-flutter-sdk
 documentation: https://github.com/Zennopay/zennopay-docs
