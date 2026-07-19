@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.1
+
+Packaging polish (no API or behavior changes).
+
+### Changed
+
+- Shortened the `pubspec.yaml` `description` to fit pub.dev's 60–180 character
+  guidance (it was truncated in search results before). Recovers the "Follow
+  Dart file conventions" pub points.
+
 ## 0.6.0
 
 Partner-facing environment names. The config presets now match the docs and API
