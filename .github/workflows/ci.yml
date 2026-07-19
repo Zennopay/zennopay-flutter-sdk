@@ -1,0 +1,28 @@
+name: CI
+
+# Static analysis + unit tests for the zennopay_flutter package. Runs on every
+# PR and on pushes to main. The publish-pubdev workflow stays tag-gated and
+# separate; this is the always-on quality gate.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    name: analyze & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.5
+          channel: stable
+          cache: true
+      - run: flutter --version
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Analyze (infos are fatal)
+        run: dart analyze --fatal-infos
+      - name: Run tests
+        run: flutter test
