@@ -2,10 +2,13 @@
 
 ## 0.6.1
 
-Packaging polish (no API or behavior changes).
+Native-dependency alignment + packaging polish.
 
 ### Changed
 
+- Bumped the Android native dependency `in.zennopay:sdk` **0.5.0 → 0.6.0**, now
+  that 0.6.0 is on Maven Central — both platforms reference native 0.6.0 (iOS
+  `Zennopay ~> 0.6.0`, Android `in.zennopay:sdk:0.6.0`). No Dart API change.
 - Shortened the `pubspec.yaml` `description` to fit pub.dev's 60–180 character
   guidance (it was truncated in search results before). Recovers the "Follow
   Dart file conventions" pub points.
