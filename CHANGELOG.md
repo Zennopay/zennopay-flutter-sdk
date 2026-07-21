@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.7.0
+
+Partner package allowlist support, inherited from the native SDKs.
+
+### Changed
+
+- Bumped both native dependencies to the releases that send the
+  `X-Zennopay-Package` header — iOS `Zennopay ~> 0.7.0`, Android
+  `in.zennopay:sdk:0.7.0`. The native PaymentSheet now stamps the host app's
+  bundle id / `applicationId` on every REST call so partners can enable a
+  package allowlist in Console → Developers → Security. No Dart API change; the
+  bridge inherits the behavior transitively.
+
 ## 0.6.1
 
 Native-dependency alignment + packaging polish.

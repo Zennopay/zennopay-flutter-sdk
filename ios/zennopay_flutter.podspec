@@ -22,7 +22,7 @@ Pod::Spec.new do |s|
   # exposes `Zennopay.presentCheckout(...)` / `Zennopay.presentReceipt(...)`.
   # Pulled transitively so partners never add it by hand. Published separately
   # as the `Zennopay` CocoaPod.
-  s.dependency "Zennopay", "~> 0.6.0"
+  s.dependency "Zennopay", "~> 0.7.0"
 
   s.pod_target_xcconfig = { "DEFINES_MODULE" => "YES" }
 end
