@@ -71,5 +71,5 @@ dependencies {
     // The native Zennopay Android SDK that renders the PaymentSheet and exposes
     // `Zennopay.presentCheckout(...)`. Pulled transitively from Maven Central so
     // partners never add it by hand.
-    implementation("in.zennopay:sdk:0.6.0")
+    implementation("in.zennopay:sdk:0.7.0")
 }
