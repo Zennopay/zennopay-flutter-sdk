@@ -16,8 +16,12 @@ Full documentation: [Zennopay/zennopay-docs](https://github.com/Zennopay/zennopa
 
 - Flutter 3.19+ / Dart 3.4+
 - **iOS 16+** and **Android (minSdk 24)** targets
-- A backend session endpoint that creates the payment intent and mints the
-  short-lived session JWT (your API keys never ship in the app)
+- A backend session endpoint that creates the payment intent by calling
+  Zennopay's `POST /v1/payment_intents` (HMAC-signed, server-to-server) and
+  relays the returned Zennopay-minted `session_token` to the sheet — no JWT
+  keypair to generate or register (your API keys never ship in the app). See
+  the [partner-starter](https://github.com/Zennopay/zennopay-partner-starter)
+  (v0.2.0+) for a reference backend.
 
 The native SDKs that render the sheet are declared as **transitive
 dependencies** of this plugin — you do **not** add them by hand:
@@ -69,7 +73,9 @@ field on denial. Your host `Activity` must be a `ComponentActivity`
 import 'package:zennopay_flutter/zennopay_flutter.dart';
 
 Future<void> scanAndPay() async {
-  // 1. Ask YOUR backend for a checkout session (intent + session JWT).
+  // 1. Ask YOUR backend for a checkout session. It calls Zennopay's
+  //    POST /v1/payment_intents (HMAC) and returns the intent id + the
+  //    Zennopay-minted session_token.
   final session = await walletApi.createCheckoutSession();
 
   // 2. Present the native PaymentSheet and await the terminal result.
@@ -77,8 +83,9 @@ Future<void> scanAndPay() async {
     intentId: session.intentId,
     sessionJwt: session.sessionJwt,
     refreshSession: (intentId) async {
-      // Called on session expiry (401): re-mint for the SAME intent,
-      // or return null if you can't.
+      // Called on session expiry (401): ask your backend for a fresh
+      // session_token for the SAME intent (it re-calls Zennopay's session
+      // endpoint), or return null if you can't.
       final refreshed = await walletApi.refreshSession(intentId);
       return refreshed?.sessionJwt;
     },

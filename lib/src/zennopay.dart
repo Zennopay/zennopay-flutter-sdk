@@ -56,9 +56,11 @@ abstract final class Zennopay {
   /// refresh, and relaunch recovery are all owned by the native SDK.
   ///
   /// - [intentId]: the Zennopay payment intent your backend pre-created.
-  /// - [sessionJwt]: the partner-minted, intent-bound session JWT (≤5 min).
-  /// - [refreshSession]: optional host hook invoked on a 401/expiry. Re-mint a
-  ///   fresh session JWT for the SAME intent, or return null if you can't.
+  /// - [sessionJwt]: the Zennopay-minted, intent-bound session token (≤5 min),
+  ///   returned to your backend from `POST /v1/payment_intents`.
+  /// - [refreshSession]: optional host hook invoked on a 401/expiry. Ask your
+  ///   backend for a fresh session token for the SAME intent (it re-calls
+  ///   Zennopay's session endpoint), or return null if you can't.
   /// - [appearance]: partner theming; defaults to the bank-solid Zennopay look.
   /// - [config]: REST/environment configuration; defaults to sandbox.
   static Future<PaymentResult> presentSheet({
